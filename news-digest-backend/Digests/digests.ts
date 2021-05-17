@@ -1,16 +1,11 @@
 require('dotenv').config()
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-import { int } from 'aws-sdk/clients/datapipeline';
 import axios from 'axios';
-import { stat } from 'fs';
 import { v1 as uuidv1 } from 'uuid';
 const AWS = require("aws-sdk")
-const jwtExpiration = 3600
+
 AWS.config.update({
     region: "us-west-2" // replace with your region in AWS account
 });
-
 const DynamoDB = new AWS.DynamoDB.DocumentClient();
 
 interface NewsInfo {
@@ -31,20 +26,13 @@ interface Digest {
     subscriptionStatus: string;
 }
 
-interface User {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-}
-
-// login function
 const addDigest = async (request:any, response:any) => {
     let userObj = request.body.user
-    console.log(userObj)
     let newsObj = request.body.news
     let subscriptionStatus = request.body.subscriptionStatus
     let creationDate = request.body.creationDate
+    
+    console.log(`Adding digest for ${userObj.email}`)
 
     let apiRequest = `https://newsapi.org/v2/everything?q=${newsObj.keyword}&from='${newsObj.startDate}'0&to=${newsObj.endDate}0&sortBy=${newsObj.sortBy}&apiKey=${process.env.NEWS_API_KEY}`
     
@@ -271,9 +259,10 @@ const getArticles = async (digests: any) => {
                 TableName: 'digests',
                 ConsistentRead: true
             };
-            var result = await DynamoDB.get(params).promise()
+            let result = await DynamoDB.get(params).promise()
             let feed = result.Item
-            articles.push(feed)
+            if (feed)
+                articles.push(feed)
         } catch (error) {
             console.error(error);
         } 

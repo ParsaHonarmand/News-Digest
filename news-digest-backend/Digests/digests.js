@@ -40,12 +40,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
-var bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
 var axios_1 = __importDefault(require("axios"));
 var uuid_1 = require("uuid");
 var AWS = require("aws-sdk");
-var jwtExpiration = 3600;
 AWS.config.update({
     region: "us-west-2" // replace with your region in AWS account
 });
@@ -376,7 +373,8 @@ var getArticles = function (digests) { return __awaiter(void 0, void 0, void 0, 
             case 3:
                 result = _a.sent();
                 feed = result.Item;
-                articles.push(feed);
+                if (feed)
+                    articles.push(feed);
                 return [3 /*break*/, 5];
             case 4:
                 error_5 = _a.sent();

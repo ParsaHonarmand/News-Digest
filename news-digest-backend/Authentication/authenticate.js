@@ -41,11 +41,135 @@ var bcrypt = require('bcryptjs');
 var jwt = require('jsonwebtoken');
 var uuid_1 = require("uuid");
 var AWS = require("aws-sdk");
-var jwtExpiration = 3600;
 AWS.config.update({
     region: "us-west-2" // replace with your region in AWS account
 });
 var DynamoDB = new AWS.DynamoDB.DocumentClient();
+var jwtExpiration = 3600;
+var signUp = function (request, response) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, firstName, lastName, email, password, emailFormat, hashedPassword, userObj, user;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _a = request.body, firstName = _a.firstName, lastName = _a.lastName, email = _a.email, password = _a.password;
+                console.log("Signing up " + email + " now...");
+                // Validating input
+                if (!firstName || !lastName || !email || !password)
+                    return [2 /*return*/, response.status(400).send("Please include all fields")];
+                emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailFormat.test(email))
+                    return [2 /*return*/, response.status(400).send("Please Enter a valid email")];
+                return [4 /*yield*/, hashPassword(password)];
+            case 1:
+                hashedPassword = _b.sent();
+                userObj = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    password: hashedPassword
+                };
+                return [4 /*yield*/, addUser(userObj)];
+            case 2:
+                user = _b.sent();
+                if (!user)
+                    return [2 /*return*/, response.status(500).send("An error has occured")];
+                response.status(201).send(user);
+                return [2 /*return*/];
+        }
+    });
+}); };
+var login = function (request, response) { return __awaiter(void 0, void 0, void 0, function () {
+    function onScan(err, data) {
+        if (err) {
+            console.error("Unable to get user:", JSON.stringify(err, null, 2));
+        }
+        else {
+            console.log("Gpt all users");
+            data.Items.forEach(function (user) {
+                if (user.email == email) {
+                    console.log("Email found: " + user.email);
+                    loggedInUser.user = {
+                        id: user.id,
+                        firstName: user.firstName,
+                        lastname: user.lastName,
+                        email: user.email
+                    };
+                    authenticate(user.password);
+                }
+            });
+            // continue scanning if we have more users, because
+            // scan can retrieve a maximum of 1MB of data
+            if (typeof data.LastEvaluatedKey != "undefined") {
+                console.log("Scanning for more users...");
+                params.ExclusiveStartKey = data.LastEvaluatedKey;
+                DynamoDB.scan(params, onScan);
+            }
+        }
+    }
+    function authenticate(userPassword) {
+        return __awaiter(this, void 0, void 0, function () {
+            var isAuthenticated, token;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // Makes sure the user has entered the correct password to obtain the token
+                        console.log(userPassword);
+                        return [4 /*yield*/, checkPassword(userPassword, password)];
+                    case 1:
+                        isAuthenticated = _a.sent();
+                        if (isAuthenticated) {
+                            token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
+                                algorithm: "HS256",
+                                expiresIn: jwtExpiration,
+                            });
+                            console.log("Login successful!");
+                            loggedInUser.token = token;
+                            response.status(200).send(loggedInUser);
+                        }
+                        else
+                            response.status(401).send("Incorrent email/password");
+                        return [2 /*return*/];
+                }
+            });
+        });
+    }
+    var _a, email, password, loggedInUser, emailFormat, params, e_1;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _a = request.body, email = _a.email, password = _a.password;
+                console.log("Logging in " + email + " now");
+                loggedInUser = {};
+                // Validating input
+                if (!email || !password)
+                    return [2 /*return*/, response.status(400).send("Please include all fields")];
+                emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailFormat.test(email))
+                    return [2 /*return*/, response.status(400).send("Please Enter a valid email")];
+                params = {
+                    TableName: "users",
+                    FilterExpression: 'email = :email',
+                    ExpressionAttributeValues: {
+                        ":email": email
+                    },
+                    ExclusiveStartKey: null
+                };
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, DynamoDB.scan(params, onScan)];
+            case 2:
+                _b.sent();
+                return [3 /*break*/, 4];
+            case 3:
+                e_1 = _b.sent();
+                console.log("Error occurred querying for users");
+                console.log(e_1);
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
 // Creates a hashed password with added salt
 // This ensures that even when two users choose the same password, their hashes would be different
 var hashPassword = function (password) { return __awaiter(void 0, void 0, void 0, function () {
@@ -122,136 +246,6 @@ var addUser = function (userObj) { return __awaiter(void 0, void 0, void 0, func
                     }
                 };
                 return [2 /*return*/, result];
-        }
-    });
-}); };
-// sign up function 
-var signUp = function (request, response) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, firstName, lastName, email, password, emailFormat, hashedPassword, userObj, user;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                console.log("Signing up now...");
-                _a = request.body, firstName = _a.firstName, lastName = _a.lastName, email = _a.email, password = _a.password;
-                // Validating input
-                if (!firstName || !lastName || !email || !password)
-                    return [2 /*return*/, response.status(400).send("Please include all fields")];
-                emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailFormat.test(email))
-                    return [2 /*return*/, response.status(400).send("Please Enter a valid email")];
-                return [4 /*yield*/, hashPassword(password)];
-            case 1:
-                hashedPassword = _b.sent();
-                userObj = {
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: email,
-                    password: hashedPassword
-                };
-                return [4 /*yield*/, addUser(userObj)];
-            case 2:
-                user = _b.sent();
-                if (!user)
-                    return [2 /*return*/, response.status(500).send("An error has occured")];
-                response.status(201).send(user);
-                return [2 /*return*/];
-        }
-    });
-}); };
-// login function
-var login = function (request, response) { return __awaiter(void 0, void 0, void 0, function () {
-    function onScan(err, data) {
-        if (err) {
-            console.error("Unable to scan the table. Error JSON:", JSON.stringify(err, null, 2));
-        }
-        else {
-            // print all the movies
-            console.log("Scan succeeded.");
-            data.Items.forEach(function (user) {
-                if (user.email == email) {
-                    console.log("Email found: " + user.email);
-                    loggedInUser.user = {
-                        id: user.id,
-                        firstName: user.firstName,
-                        lastname: user.lastName,
-                        email: user.email
-                    };
-                    authenticate(user.password);
-                }
-            });
-            // continue scanning if we have more movies, because
-            // scan can retrieve a maximum of 1MB of data
-            if (typeof data.LastEvaluatedKey != "undefined") {
-                console.log("Scanning for more...");
-                params.ExclusiveStartKey = data.LastEvaluatedKey;
-                DynamoDB.scan(params, onScan);
-            }
-        }
-    }
-    function authenticate(userPassword) {
-        return __awaiter(this, void 0, void 0, function () {
-            var isAuthenticated, token;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        // Makes sure the user has entered the correct password to obtain the token
-                        console.log(userPassword);
-                        return [4 /*yield*/, checkPassword(userPassword, password)];
-                    case 1:
-                        isAuthenticated = _a.sent();
-                        if (isAuthenticated) {
-                            token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
-                                algorithm: "HS256",
-                                expiresIn: jwtExpiration,
-                            });
-                            console.log("Login successful!");
-                            loggedInUser.token = token;
-                            response.status(200).send(loggedInUser);
-                        }
-                        // I decided to return generic error messages to the user to increase the security of the API. Using this, it would be harder for a hacker
-                        // to guess the password in a brute-force way because they would have to guess the username as well as the password to gain access.
-                        else
-                            response.status(401).send("Incorrent email/password");
-                        return [2 /*return*/];
-                }
-            });
-        });
-    }
-    var _a, email, password, loggedInUser, emailFormat, params, e_1;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                _a = request.body, email = _a.email, password = _a.password;
-                loggedInUser = {};
-                // Validating input
-                if (!email || !password)
-                    return [2 /*return*/, response.status(400).send("Please include all fields")];
-                emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailFormat.test(email))
-                    return [2 /*return*/, response.status(400).send("Please Enter a valid email")];
-                params = {
-                    TableName: "users",
-                    FilterExpression: 'email = :email',
-                    ExpressionAttributeValues: {
-                        ":email": email
-                    },
-                    ExclusiveStartKey: null
-                };
-                _b.label = 1;
-            case 1:
-                _b.trys.push([1, 3, , 4]);
-                // Do scan
-                return [4 /*yield*/, DynamoDB.scan(params, onScan)];
-            case 2:
-                // Do scan
-                _b.sent();
-                return [3 /*break*/, 4];
-            case 3:
-                e_1 = _b.sent();
-                console.log("Error occurred querying for users belong to group.");
-                console.log(e_1);
-                return [3 /*break*/, 4];
-            case 4: return [2 /*return*/];
         }
     });
 }); };

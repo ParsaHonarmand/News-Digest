@@ -1,93 +1,37 @@
 import React, { useState } from 'react';
-import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
-import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-import Link from '@material-ui/core/Link';
-import Grid from '@material-ui/core/Grid';
-import Box from '@material-ui/core/Box';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
-import Container from '@material-ui/core/Container';
-import { Card, CardContent, Chip, FormControl, FormLabel, IconButton, InputLabel, List, ListItem, ListItemIcon, ListItemSecondaryAction, ListItemText, ListSubheader, MenuItem, Radio, RadioGroup, Select } from '@material-ui/core';
-import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
+import { FormControl, FormLabel, InputLabel, MenuItem, Radio, RadioGroup, Select, Tooltip } from '@material-ui/core';
 import axios from 'axios';
-import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import { useHistory } from 'react-router-dom';
-// Picker
-import CalendarTodayIcon from "@material-ui/icons/CalendarToday";
-import DateFnsUtils from "@date-io/date-fns"; // choose your lib
-import { DatePicker, LocalizationProvider } from "@material-ui/pickers";
 import { useCookies } from 'react-cookie/es6';
 
-interface NewsInfo {
-    source: string;
-    title: string;
-    description: string;
-    url: string;
-    urlToImage: string;
-    publishedAt: string;
-}
-
-interface Digest {
-    creationDate: string;
-    feed: NewsInfo[];
-    id: string;
-    name: string;
-    subscriptionStatus: boolean;
-}
-
-const apiEndpoint = "http://localhost:8000"
+const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:8000": "PROD")
 const useStyles = makeStyles((theme) => ({
-    paper: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-    },
-    avatar: {
-      margin: theme.spacing(1),
-      backgroundColor: theme.palette.secondary.main,
-    },
-    form: {
-      width: '100%', // Fix IE 11 issue.
-      marginTop: theme.spacing(1),
-    },
-    submit: {
-      margin: theme.spacing(3, 0, 2),
-    },
-    card: {
-        marginTop: theme.spacing(15)
-    },
-    header: {
-        marginTop: theme.spacing(2)
-    },
-    button: {
-        margin: 'auto auto'
-    },
     textField: {
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1),
+        margin: theme.spacing(2),
         width: 200,
     },
     selectEmpty: {
         marginTop: theme.spacing(2),
     },
     formControl: {
-        margin: theme.spacing(1),
-        minWidth: 120,
+        margin: theme.spacing(2),
+        width: 200,
     },
+    radio: {
+        margin: theme.spacing(2),
+        width: 200,
+    }
   }));
 
 function AddDigest(props: any) {
     const classes = useStyles();
-    const history = useHistory();
 
     const [name, setName] = useState("")
     const [keyword, setKeyword] = useState("")
@@ -95,20 +39,13 @@ function AddDigest(props: any) {
     const [endDate, setEndDate] = useState("");
     const [sortBy, setSortBy] = useState("Newest First")
     const [radioValue, setRadioValue] = React.useState('yes');
-    const [cookies, setCookie, removeCookie] = useCookies(['cookie-name']);
+    const [cookies] = useCookies(['cookie-name']);
 
     const handleSubscription = () => {
         props.handleSubscription()
     };
     const handleClose = () => {
         props.handleClose()
-    };
-
-    const handleStartDate = (event: React.ChangeEvent<{ value: unknown }>) => {
-        setStartDate(event.target.value as string);
-    };
-    const handleEndDate = (event: React.ChangeEvent<{ value: unknown }>) => {
-        setEndDate(event.target.value as string);
     };
     const handleSortChange = (event: React.ChangeEvent<{ value: unknown }>) => {
         setSortBy(event.target.value as string);
@@ -117,15 +54,17 @@ function AddDigest(props: any) {
         setRadioValue((event.target as HTMLInputElement).value);
     };
 
-    function submitSubscription(e: any) {
+    const submitSubscription = async (e: any) => {
         let user: any
         if (localStorage) {
             user = localStorage.getItem("user")
         } 
-        let subscriptionObj = {
+        user = JSON.parse(user)
+
+        const subscriptionObj = {
             user: {
-                email: JSON.parse(user).email,
-                id: JSON.parse(user).id
+                email: user.email,
+                id: user.id
             },
             news: {
                 digestName: name,
@@ -139,46 +78,52 @@ function AddDigest(props: any) {
         }
 
         let token = cookies['jwt_token']
-        console.log(token)
-        axios.post(
-            apiEndpoint + '/subscribe', 
-            subscriptionObj,
-            {  
-                headers: {
-                  'Authorization': `Bearer ${token}` 
+        
+        try {
+            const res = await axios.post(
+                apiEndpoint + '/subscribe', 
+                subscriptionObj,
+                {  
+                    headers: {
+                      'Authorization': `Bearer ${token}` 
+                    }
                 }
-            }
-            )
-            .then(response => {
-                // setTimeout(() => {
-                    console.log(response)
-                    handleSubscription()
-                // }, 4000);
-            });
+            );
+            console.log("Created: ")
+            console.log(res)
+            handleSubscription()
+        } catch(err) {
+            console.log("Error occured while adding a new feed: ")
+            console.log(err)
+        }
     }
 
     return (
         <div>
-            <DialogTitle id="form-dialog-title">Add and subscribe to a news digest</DialogTitle>
-            <DialogContent>
-                <DialogContentText>
+            <DialogTitle id="form-dialog-title">
+                <Typography variant="h5">
                     Add and subscribe to a news digest
-                </DialogContentText>
+                </Typography>
+            </DialogTitle>
+            <DialogContent>
                 <TextField
+                    required
                     autoFocus
                     margin="dense"
                     id="name"
                     label="Name"
                     value={name}
                     onChange={e => setName(e.target.value)}
+                    className={classes.textField}
                 />
                 <TextField
-                    autoFocus
+                    required
                     margin="dense"
                     id="keyword"
                     label="Keyword to search for"
                     value={keyword}
                     onChange={e => setKeyword(e.target.value)}
+                    className={classes.textField}
                 />
                 <TextField
                     id="date"
@@ -219,21 +164,22 @@ function AddDigest(props: any) {
                         <MenuItem value="popularity">Popularity</MenuItem>
                         <MenuItem value="relevance">Relevance</MenuItem>
                     </Select>
-                    {/* <FormHelperText>Label + placeholder</FormHelperText> */}
                 </FormControl>
-                <FormControl component="fieldset">
-                    <FormLabel component="legend">Subscribe to email digest?</FormLabel>
-                    <RadioGroup aria-label="gender" name="gender1" value={radioValue} onChange={handleRadioChange} row>
-                        <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                        <FormControlLabel value="no" control={<Radio />} label="No" />
-                    </RadioGroup>
-                </FormControl>
+                <Tooltip placement="top" title="We will use your email to send you weekly digests. You can always opt out by unsubscribing later">
+                    <FormControl component="fieldset" className={classes.radio}>
+                        <FormLabel component="legend">Subscribe to email digest?</FormLabel>
+                        <RadioGroup aria-label="gender" name="gender1" value={radioValue} onChange={handleRadioChange} row>
+                            <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                            <FormControlLabel value="no" control={<Radio />} label="No" />
+                        </RadioGroup>
+                    </FormControl>
+                </Tooltip>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={handleClose} color="primary">
+            <DialogActions className={classes.formControl}>
+                <Button variant="contained" onClick={handleClose} color="primary" style={{backgroundColor: 'red'}}>
                     Cancel
                 </Button>
-                <Button onClick={submitSubscription} color="primary">
+                <Button variant="contained" onClick={submitSubscription} color="primary">
                     Subscribe
                 </Button>
             </DialogActions>
