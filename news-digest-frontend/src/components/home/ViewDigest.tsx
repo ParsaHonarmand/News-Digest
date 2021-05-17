@@ -13,7 +13,7 @@ import AddDigest from './AddDigest'
 import { useCookies } from 'react-cookie/es6';
 import Topbar from '../Topbar'
 
-const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:8000": "PROD")
+const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:8000": "http://52.41.106.185/8000")
 
 interface NewsInfo {
     source: string;

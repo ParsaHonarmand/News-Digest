@@ -1,11 +1,10 @@
 import express from 'express'
-import { v1 as uuidv1 } from 'uuid';
 const dotenv = require('dotenv')
 const axios = require('axios')
 const AWS = require("aws-sdk")
 const auth = require('./authentication/authenticate')
 const { authMiddleware } = require('./authentication/authMiddleware')
-const digests = require('./Digests/digests')
+const digests = require('./digests/digests')
 
 dotenv.config();
 
@@ -20,7 +19,6 @@ interface NewsInfo {
 
 
 const app = express();
-const apiKey = process.env.NEWS_API_KEY;
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -41,6 +39,9 @@ app.listen(8000, () => {
 })
 
 // API endpoints for this application
+app.get('/', (req, res) => {
+  res.sendStatus(200).send("Welcome!")
+})
 app.post('/signup', auth.signUp)
 app.post('/login', auth.login)
 

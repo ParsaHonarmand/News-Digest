@@ -19,7 +19,7 @@ import { useHistory } from "react-router-dom";
 import { useCookies } from 'react-cookie/es6';
 
 
-const apiEndpoint = "http://localhost:8000"
+const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:8000": "http://52.41.106.185/8000")
 const useStyles = makeStyles((theme) => ({
     paper: {
       display: 'flex',
@@ -50,19 +50,22 @@ function Login() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
 
-    function handleLogin(e: any) {
+    const handleLogin = async (e: any) => {
         e.preventDefault();
         let loginObj = {
             email: email,
             password: password
         }
-        axios.post(apiEndpoint + '/login', loginObj)
-            .then(response => {
-                console.log(response)
-                setCookie("jwt_token", response.data.token)
-                localStorage.setItem('user', JSON.stringify(response.data.user))
-                history.push("/home")
-            });
+        try {
+            const res = await axios.post(apiEndpoint + '/login', loginObj)
+            console.log(res)
+            setCookie("jwt_token", res.data.token)
+            localStorage.setItem('user', JSON.stringify(res.data.user))
+            history.push("/home")
+        } catch(error) {
+            console.log("Failed to login")
+            console.log(error)
+        }
     }
   
     return (

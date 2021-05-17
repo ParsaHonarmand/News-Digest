@@ -47,15 +47,14 @@ AWS.config.update({
     region: "us-west-2" // replace with your region in AWS account
 });
 var DynamoDB = new AWS.DynamoDB.DocumentClient();
-// login function
 var addDigest = function (request, response) { return __awaiter(void 0, void 0, void 0, function () {
     var userObj, newsObj, subscriptionStatus, creationDate, apiRequest;
     return __generator(this, function (_a) {
         userObj = request.body.user;
-        console.log(userObj);
         newsObj = request.body.news;
         subscriptionStatus = request.body.subscriptionStatus;
         creationDate = request.body.creationDate;
+        console.log("Adding digest for " + userObj.email);
         apiRequest = "https://newsapi.org/v2/everything?q=" + newsObj.keyword + "&from='" + newsObj.startDate + "'0&to=" + newsObj.endDate + "0&sortBy=" + newsObj.sortBy + "&apiKey=" + process.env.NEWS_API_KEY;
         axios_1.default.get(apiRequest)
             .then(function (res) { return __awaiter(void 0, void 0, void 0, function () {

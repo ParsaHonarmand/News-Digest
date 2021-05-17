@@ -9,10 +9,9 @@ var axios = require('axios');
 var AWS = require("aws-sdk");
 var auth = require('./authentication/authenticate');
 var authMiddleware = require('./authentication/authMiddleware').authMiddleware;
-var digests = require('./Digests/digests');
+var digests = require('./digests/digests');
 dotenv.config();
 var app = express_1.default();
-var apiKey = process.env.NEWS_API_KEY;
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "*");
@@ -27,6 +26,9 @@ app.listen(8000, function () {
     console.log('The application is listening on port 8000!');
 });
 // API endpoints for this application
+app.get('/', function (req, res) {
+    res.sendStatus(200).send("Welcome!");
+});
 app.post('/signup', auth.signUp);
 app.post('/login', auth.login);
 app.post('/subscribe', authMiddleware, digests.addDigest);
