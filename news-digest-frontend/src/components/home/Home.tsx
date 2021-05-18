@@ -12,7 +12,7 @@ import { useCookies } from 'react-cookie';
 import MenuIcon from '@material-ui/icons/Menu';
 import Topbar from '../Topbar'
 
-const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:3000": "http://18.236.160.150:8000")
+const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:3000": "https://18.236.160.150:8000")
 
 interface NewsInfo {
     source: string;

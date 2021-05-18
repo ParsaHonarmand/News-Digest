@@ -19,7 +19,7 @@ import { useHistory } from 'react-router-dom';
 
 
 
-const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:3000": "http://18.236.160.150:8000")
+const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:3000": "https://18.236.160.150:8000")
 const useStyles = makeStyles((theme) => ({
   paper: {
     display: 'flex',
