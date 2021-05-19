@@ -19,7 +19,7 @@ import { useHistory } from "react-router-dom";
 import { useCookies } from 'react-cookie/es6';
 
 
-const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:8000": "https://news-digest-backend.tk:8000")
+const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:8000": "https://news-digest-backend.tk")
 const useStyles = makeStyles((theme) => ({
     paper: {
       display: 'flex',
