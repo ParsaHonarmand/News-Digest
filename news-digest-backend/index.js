@@ -7,9 +7,9 @@ var express_1 = __importDefault(require("express"));
 var dotenv = require('dotenv');
 var axios = require('axios');
 var AWS = require("aws-sdk");
-var auth = require('./authentication/authenticate');
-var authMiddleware = require('./authentication/authMiddleware').authMiddleware;
-var digests = require('./digests/digests');
+var auth = require('./Authentication/authenticate');
+var authMiddleware = require('./Authentication/authMiddleware').authMiddleware;
+var digests = require('./Digests/digests');
 dotenv.config();
 var app = express_1.default();
 app.use(function (req, res, next) {
