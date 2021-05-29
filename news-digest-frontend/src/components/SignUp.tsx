@@ -94,7 +94,7 @@ export default function SignUp() {
     let signupObj = {
         firstName: firstName,
         lastName: lastName, 
-        email: email,
+        email: email.toLowerCase(),
         password: password
     }
     try {

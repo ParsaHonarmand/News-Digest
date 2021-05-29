@@ -70,7 +70,7 @@ function Login() {
         }
 
         let loginObj = {
-            email: email,
+            email: email.toLowerCase(),
             password: password
         }
         try {
