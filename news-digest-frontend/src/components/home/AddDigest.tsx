@@ -41,6 +41,9 @@ function AddDigest(props: any) {
     const [radioValue, setRadioValue] = React.useState('yes');
     const [cookies] = useCookies(['cookie-name']);
 
+    const [isNameValid, setIsNameValid] = useState(true)
+    const [iskeywordValid, setIsKeywordValid] = useState(true)
+
     const handleSubscription = () => {
         props.handleSubscription()
     };
@@ -55,6 +58,16 @@ function AddDigest(props: any) {
     };
 
     const submitSubscription = async (e: any) => {
+        setIsNameValid(true)
+        setIsKeywordValid(true)
+        if (name === "") {
+            setIsNameValid(false)
+            return
+        } 
+        if (keyword === "") {
+            setIsKeywordValid(false)
+            return
+        }
         let user: any
         if (localStorage) {
             user = localStorage.getItem("user")
@@ -95,6 +108,7 @@ function AddDigest(props: any) {
         } catch(err) {
             console.log("Error occured while adding a new feed: ")
             console.log(err)
+            alert("Failed to create digest, please try again")
         }
     }
 
@@ -107,6 +121,8 @@ function AddDigest(props: any) {
             </DialogTitle>
             <DialogContent>
                 <TextField
+                    error={!isNameValid}
+                    helperText={!isNameValid && "Please enter a name"}
                     required
                     autoFocus
                     margin="dense"
@@ -117,6 +133,8 @@ function AddDigest(props: any) {
                     className={classes.textField}
                 />
                 <TextField
+                    error={!iskeywordValid}
+                    helperText={!iskeywordValid && "Please enter a keyword"}
                     required
                     margin="dense"
                     id="keyword"
