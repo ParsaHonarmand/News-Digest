@@ -2,9 +2,9 @@ import express from 'express'
 const dotenv = require('dotenv')
 const axios = require('axios')
 const AWS = require("aws-sdk")
-const auth = require('./authentication/authenticate')
-const { authMiddleware } = require('./authentication/authMiddleware')
-const digests = require('./digests/digests')
+const auth = require('./Authentication/authenticate')
+const { authMiddleware } = require('./Authentication/authMiddleware')
+const digests = require('./Digests/digests')
 
 dotenv.config();
 
