@@ -11,7 +11,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { useCookies } from 'react-cookie/es6';
 
-const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:3000": "https://news-digest-backend.tk")
+const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:3000": "https://news-digest-backend.herokuapp.com/")
 const useStyles = makeStyles((theme) => ({
     textField: {
         margin: theme.spacing(2),
