@@ -19,7 +19,7 @@ import { useHistory } from 'react-router-dom';
 
 
 
-const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:3000": "https://news-digest-backend.herokuapp.com/")
+const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:3000": "https://news-digest-backend.herokuapp.com")
 const useStyles = makeStyles((theme) => ({
   paper: {
     display: 'flex',
