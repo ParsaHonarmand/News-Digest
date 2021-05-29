@@ -22,7 +22,7 @@ app.use(express_1.default.urlencoded({
     extended: true
 }));
 app.use(express_1.default.json());
-app.listen(8000, function () {
+app.listen(process.env.PORT || 8000, function () {
     console.log('The application is listening on port 8000!');
 });
 // API endpoints for this application
