@@ -47,7 +47,30 @@ AWS.config.update({
 var DynamoDB = new AWS.DynamoDB.DocumentClient();
 var jwtExpiration = 3600;
 var signUp = function (request, response) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, firstName, lastName, email, password, emailFormat, hashedPassword, userObj, user;
+    function onScan(err, data) {
+        if (err) {
+            console.error("Unable to get user:", JSON.stringify(err, null, 2));
+            return response.status(500);
+        }
+        else {
+            console.log("Got all users");
+            data.Items.every(function (user) {
+                if (user.email == email) {
+                    console.log("Email Exists: " + user.email);
+                    emailExists = true;
+                    return false;
+                }
+            });
+            // continue scanning if we have more users, because
+            // scan can retrieve a maximum of 1MB of data
+            if (typeof data.LastEvaluatedKey != "undefined") {
+                console.log("Scanning for more users...");
+                params.ExclusiveStartKey = data.LastEvaluatedKey;
+                DynamoDB.scan(params, onScan);
+            }
+        }
+    }
+    var _a, firstName, lastName, email, password, emailFormat, hashedPassword, userObj, params, emailExists, res, user, error_1;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -68,13 +91,37 @@ var signUp = function (request, response) { return __awaiter(void 0, void 0, voi
                     email: email,
                     password: hashedPassword
                 };
-                return [4 /*yield*/, addUser(userObj)];
+                params = {
+                    TableName: "users",
+                    FilterExpression: 'email = :email',
+                    ExpressionAttributeValues: {
+                        ":email": email
+                    },
+                    ExclusiveStartKey: null
+                };
+                emailExists = false;
+                _b.label = 2;
             case 2:
+                _b.trys.push([2, 5, , 6]);
+                return [4 /*yield*/, DynamoDB.scan(params, onScan).promise()];
+            case 3:
+                res = _b.sent();
+                if (emailExists) {
+                    return [2 /*return*/, response.status(400).send("Email already exists")];
+                }
+                return [4 /*yield*/, addUser(userObj)];
+            case 4:
                 user = _b.sent();
                 if (!user)
                     return [2 /*return*/, response.status(500).send("An error has occured")];
                 response.status(201).send(user);
-                return [2 /*return*/];
+                return [3 /*break*/, 6];
+            case 5:
+                error_1 = _b.sent();
+                console.log("Error occurred querying for users");
+                console.log(error_1);
+                return [3 /*break*/, 6];
+            case 6: return [2 /*return*/];
         }
     });
 }); };
@@ -82,9 +129,10 @@ var login = function (request, response) { return __awaiter(void 0, void 0, void
     function onScan(err, data) {
         if (err) {
             console.error("Unable to get user:", JSON.stringify(err, null, 2));
+            return response.status(500);
         }
         else {
-            console.log("Gpt all users");
+            console.log("Got all users");
             data.Items.forEach(function (user) {
                 if (user.email == email) {
                     console.log("Email found: " + user.email);
@@ -202,7 +250,7 @@ var checkPassword = function (dbPassword, loginPassword) { return __awaiter(void
     });
 }); };
 var addUser = function (userObj) { return __awaiter(void 0, void 0, void 0, function () {
-    var id, params, error_1, token, result;
+    var id, params, error_2, token, result;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -228,7 +276,7 @@ var addUser = function (userObj) { return __awaiter(void 0, void 0, void 0, func
                 _a.sent();
                 return [3 /*break*/, 4];
             case 3:
-                error_1 = _a.sent();
+                error_2 = _a.sent();
                 return [2 /*return*/];
             case 4:
                 token = jwt.sign({ email: userObj.email }, process.env.JWT_SECRET, {

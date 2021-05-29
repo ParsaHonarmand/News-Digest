@@ -19,7 +19,7 @@ import { useHistory } from "react-router-dom";
 import { useCookies } from 'react-cookie/es6';
 
 
-const apiEndpoint = (process.env.REACT_APP_ENV == "DEV"? "http://localhost:8000": "https://news-digest-backend.herokuapp.com")
+const apiEndpoint = (process.env.REACT_APP_ENV !== "DEV"? "http://localhost:8000": "https://news-digest-backend.herokuapp.com")
 const useStyles = makeStyles((theme) => ({
     paper: {
       display: 'flex',
@@ -49,9 +49,26 @@ function Login() {
     const [cookies, setCookie, removeCookie] = useCookies(['jwt_token']);
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [isEmailValid, setIsEmailValid] = useState(true);
+    const [emailError, setEmailError] = useState("")
+    const [isPasswordValid, setIsPasswordValid] = useState(true);
+    const [passwordError, setPasswordError] = useState("")
 
     const handleLogin = async (e: any) => {
+        setIsEmailValid(true);
+        setIsPasswordValid(true);
+
         e.preventDefault();
+        if (email === "") {
+            setIsEmailValid(false);
+            setEmailError("Fill in the email field")
+            return
+        } else if (password === "") {
+            setIsPasswordValid(false);
+            setPasswordError("Fill in the password field")
+            return
+        }
+
         let loginObj = {
             email: email,
             password: password
@@ -65,6 +82,24 @@ function Login() {
         } catch(error) {
             console.log("Failed to login")
             console.log(error)
+            if (!error.response) return
+            if (error.response.status === 500) {
+                alert("Server error occured, please try again later")
+            }
+            if (error.response.status === 400) {
+                if (error.response.data === "Please Enter a valid email") {
+                    setIsEmailValid(false)
+                    setEmailError("Please use a correct email format")
+                }
+            } else if (error.response.status === 404) {
+                setIsEmailValid(false)
+                setEmailError("Your email does not exist, please sign up")
+            } else if (error.response.status === 401) {
+                setIsEmailValid(false)
+                setIsPasswordValid(false)
+                setPasswordError("Incorrect email and/or password")
+                setEmailError("")
+            }
         }
     }
   
@@ -82,6 +117,8 @@ function Login() {
                         </Typography>
                         <form className={classes.form} noValidate onSubmit={handleLogin}>
                             <TextField
+                                error={!isEmailValid}
+                                helperText={!isEmailValid && emailError}
                                 variant="outlined"
                                 margin="normal"
                                 required
@@ -95,6 +132,8 @@ function Login() {
                                 autoFocus
                             />
                             <TextField
+                                error={!isPasswordValid}
+                                helperText={!isPasswordValid && passwordError}
                                 variant="outlined"
                                 margin="normal"
                                 required
@@ -107,10 +146,6 @@ function Login() {
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
                             />
-                            {/* <FormControlLabel
-                              control={<Checkbox value="remember" color="primary" />}
-                              label="Remember me"
-                            /> */}
                             <Button
                                 fullWidth
                                 variant="contained"

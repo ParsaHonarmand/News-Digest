@@ -38,12 +38,56 @@ const signUp = async (request:any, response:any) => {
         email: email,
         password: hashedPassword
     }
-    
-    let user = await addUser(userObj)
-    if (!user)
-        return response.status(500).send("An error has occured")
 
-    response.status(201).send(user)
+    const params = {
+        TableName: "users",
+        FilterExpression: 'email = :email',
+        ExpressionAttributeValues: {
+          ":email": email
+        },
+        ExclusiveStartKey: null
+    }
+
+    let emailExists = false;
+
+    function onScan (err: any, data: any) {
+        if (err) {
+            console.error("Unable to get user:", JSON.stringify(err, null, 2));
+            return response.status(500)
+        } else {
+            console.log("Got all users");
+            data.Items.every((user: any) => {
+               if (user.email == email) {
+                   console.log(`Email Exists: ${user.email}`)
+                   emailExists = true
+                   return false
+               }
+            });
+    
+            // continue scanning if we have more users, because
+            // scan can retrieve a maximum of 1MB of data
+            if (typeof data.LastEvaluatedKey != "undefined") {
+                console.log("Scanning for more users...");
+                params.ExclusiveStartKey = data.LastEvaluatedKey;
+                DynamoDB.scan(params, onScan);
+            }
+        }
+    }
+
+    try {
+        const res = await DynamoDB.scan(params, onScan).promise()
+        if (emailExists) {
+            return response.status(400).send("Email already exists")
+        }
+        let user = await addUser(userObj)
+        if (!user)
+            return response.status(500).send("An error has occured")
+    
+        response.status(201).send(user)
+    } catch (error) {
+        console.log("Error occurred querying for users");
+        console.log(error)
+    }
 }
 
 
@@ -72,8 +116,9 @@ const login = async (request:any, response:any) => {
     function onScan (err: any, data: any) {
         if (err) {
             console.error("Unable to get user:", JSON.stringify(err, null, 2));
+            return response.status(500)
         } else {
-            console.log("Gpt all users");
+            console.log("Got all users");
             data.Items.forEach((user: any) => {
                if (user.email == email) {
                    console.log(`Email found: ${user.email}`)
@@ -167,7 +212,7 @@ const addUser = async (userObj: User) => {
         algorithm: "HS256",
         expiresIn: jwtExpiration,
     })
-    
+
     console.log("Sign up successful!")
 
     let result = {
